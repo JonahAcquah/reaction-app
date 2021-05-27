@@ -1,0 +1,66 @@
+ecs-cli configure --cluster reaction-app --default-launch-type FARGATE --config-name reaction-app --region eu-west-1
+ecs-cli configure profile --access-key key --secret-key secret --profile-name reaction-app-profile
+
+aws iam --region eu-west-1 create-role --role-name ecsTaskExecutionRole --assume-role-policy-document file://task-execution-assume-role.json
+aws iam --region eu-west-1 attach-role-policy --role-name ecsTaskExecutionRole --policy-arn arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+
+ecs-cli up --cluster-config reaction-app --ecs-profile reaction-app-profile
+
+==================================================
+VPC created: vpc-09d209279a12796b9
+Subnet created: subnet-03f36ecdab5abe351
+Subnet created: subnet-0a533d104e0bc9f97
+==================================================
+
+aws ec2 describe-security-groups --filters Name=vpc-id,Values=vpc-09d209279a12796b9 --region eu-west-1
+
+=============================================================================
+{
+    "SecurityGroups": [
+        {
+            "Description": "default VPC security group",
+            "GroupName": "default",
+            "IpPermissions": [
+                {
+                    "IpProtocol": "-1",
+                    "IpRanges": [],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "UserIdGroupPairs": [
+                        {
+                            "GroupId": "sg-0de2abbc59497fc37",
+                            "UserId": "147345838619"
+                        }
+                    ]
+                }
+            ],
+            "OwnerId": "147345838619",
+            "GroupId": "sg-0de2abbc59497fc37",
+            "IpPermissionsEgress": [
+                {
+                    "IpProtocol": "-1",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "UserIdGroupPairs": []
+                }
+            ],
+            "VpcId": "vpc-09d209279a12796b9"
+        }
+    ]
+}
+=============================================================================
+
+aws ec2 authorize-security-group-ingress --group-id sg-0de2abbc59497fc37 --protocol tcp --port 80 --cidr 0.0.0.0/0 --region eu-west-1
+aws ec2 authorize-security-group-ingress --group-id sg-0de2abbc59497fc37 --protocol tcp --port 4080 --cidr 0.0.0.0/0 --region eu-west-1
+aws ec2 authorize-security-group-ingress --group-id sg-0de2abbc59497fc37 --protocol tcp --port 3000 --cidr 0.0.0.0/0 --region eu-west-1
+
+ecs-cli compose --project-name reaction-app service up --create-log-groups --cluster-config reaction-app --ecs-profile reaction-app-profile
+ecs-cli compose --project-name reaction-app service ps --cluster-config reaction-app --ecs-profile reaction-app-profile
+ecs-cli logs --task-id ac46ac3e2bbf4e81a5af24273c01f239 --follow --cluster-config reaction-app --ecs-profile reaction-app-profile
+ecs-cli compose --project-name reaction-app service down --cluster-config reaction-app --ecs-profile reaction-app-profile
+ecs-cli down --force --cluster-config reaction-app --ecs-profile reaction-app-profile
