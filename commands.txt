@@ -65,4 +65,6 @@ ecs-cli compose --project-name reaction-app service up --create-log-groups --clu
 ecs-cli compose --project-name reaction-app service ps --cluster-config reaction-app --ecs-profile reaction-app-profile
 ecs-cli logs --task-id ac46ac3e2bbf4e81a5af24273c01f239 --follow --cluster-config reaction-app --ecs-profile reaction-app-profile
 ecs-cli compose --project-name reaction-app service down --cluster-config reaction-app --ecs-profile reaction-app-profile
+ecs-cli compose --project-name reaction-app-hydra service down --cluster-config reaction-app --ecs-profile reaction-app-profile
+ecs-cli compose --project-name reaction-app-hydra-migrate service down --cluster-config reaction-app --ecs-profile reaction-app-profile
 ecs-cli down --force --cluster-config reaction-app --ecs-profile reaction-app-profile

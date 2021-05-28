@@ -27,23 +27,6 @@ services:
         awslogs-region: eu-west-1
         awslogs-stream-prefix: reaction-admin
 
-  postgres:
-    image: postgres:10.3
-    environment:
-      - POSTGRES_USER=hydra
-      - POSTGRES_PASSWORD=changeme
-      - POSTGRES_DB=hydra
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-    logging:
-      driver: awslogs
-      options: 
-        awslogs-group: reaction-postgres-logs
-        awslogs-region: eu-west-1
-        awslogs-stream-prefix: reaction-postgres
-
   mongo:
     image: mongo:4.2.0
     command: mongod --oplogSize 128 --replSet rs0 --storageEngine=wiredTiger
@@ -76,36 +59,6 @@ services:
         awslogs-region: eu-west-1
         awslogs-stream-prefix: reaction-api
 
-  hydra-migrate:
-    image: oryd/hydra:v1.0.8
-    command: migrate sql -e -y
-    env_file:
-      - ./hydra-migrate.env
-    restart: on-failure
-    logging:
-      driver: awslogs
-      options: 
-        awslogs-group: reaction-hydra-migrate-logs
-        awslogs-region: eu-west-1
-        awslogs-stream-prefix: reaction-hydra-migrate
-    
-  hydra:
-    image: oryd/hydra:v1.0.8
-    command: serve all --dangerous-force-http
-    ports:
-      - "4444:4444"
-      - "4445:4445"
-      - "5555:5555"
-    env_file:
-      - ./hydra-migrate.env
-    restart: unless-stopped
-    logging:
-      driver: awslogs
-      options: 
-        awslogs-group: reaction-hydra-logs
-        awslogs-region: eu-west-1
-        awslogs-stream-prefix: reaction-hydra
-
   identity:
     image: reactioncommerce/identity:3.3.0
     env_file:
@@ -118,6 +71,23 @@ services:
         awslogs-group: reaction-identity-logs
         awslogs-region: eu-west-1
         awslogs-stream-prefix: reaction-identity
+
+  postgres:
+    image: postgres:10.3
+    environment:
+      - POSTGRES_USER=hydra
+      - POSTGRES_PASSWORD=changeme
+      - POSTGRES_DB=hydra
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    logging:
+      driver: awslogs
+      options: 
+        awslogs-group: reaction-postgres-logs
+        awslogs-region: eu-west-1
+        awslogs-stream-prefix: reaction-postgres
 
 volumes:
   mongo-db4:

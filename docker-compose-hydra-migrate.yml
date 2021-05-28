@@ -1,0 +1,15 @@
+version: '3'
+
+services:
+  hydra-migrate:
+    image: oryd/hydra:v1.0.8
+    command: migrate sql -e -y
+    env_file:
+      - ./hydra-migrate.env
+    restart: on-failure
+    logging:
+      driver: awslogs
+      options: 
+        awslogs-group: reaction-hydra-migrate-logs
+        awslogs-region: eu-west-1
+        awslogs-stream-prefix: reaction-hydra-migrate
