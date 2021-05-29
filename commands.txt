@@ -61,13 +61,25 @@ aws ec2 authorize-security-group-ingress --group-id sg-0ce076b635ce19fe2 --proto
 aws ec2 authorize-security-group-ingress --group-id sg-0ce076b635ce19fe2 --protocol tcp --port 27017 --cidr 0.0.0.0/0 --region eu-west-1
 aws ec2 authorize-security-group-ingress --group-id sg-0ce076b635ce19fe2 --protocol tcp --port 5432 --cidr 0.0.0.0/0 --region eu-west-1
 
+Start Service:
+
 ecs-cli compose --project-name reaction-app service up --create-log-groups --cluster-config reaction-app --ecs-profile reaction-app-profile
-ecs-cli compose --project-name reaction-app-hydra --file docker-compose-hydra.yml  service up --create-log-groups --cluster-config reaction-app --ecs-profile reaction-app-profile
-ecs-cli compose --project-name reaction-app-hydra-migrate --file docker-compose-hydra-migrate.yml  service up --create-log-groups --cluster-config reaction-app --ecs-profile reaction-app-profile
+ecs-cli compose --project-name reaction-app-db --file docker-compose-db.yml  service up --create-log-groups --cluster-config reaction-app --ecs-profile reaction-app-profile
+ecs-cli compose --project-name reaction-app-migrate --file docker-compose-migrate.yml  service up --create-log-groups --cluster-config reaction-app --ecs-profile reaction-app-profile
+
+Check Service Status:
 
 ecs-cli compose --project-name reaction-app service ps --cluster-config reaction-app --ecs-profile reaction-app-profile
-ecs-cli logs --task-id ac46ac3e2bbf4e81a5af24273c01f239 --follow --cluster-config reaction-app --ecs-profile reaction-app-profile
+ecs-cli compose --project-name reaction-app-db service ps --cluster-config reaction-app --ecs-profile reaction-app-profile
+ecs-cli compose --project-name reaction-app-migrate service ps --cluster-config reaction-app --ecs-profile reaction-app-profile
+
+Shutdown Service:
+
 ecs-cli compose --project-name reaction-app service down --cluster-config reaction-app --ecs-profile reaction-app-profile
-ecs-cli compose --project-name reaction-app-hydra service down --cluster-config reaction-app --ecs-profile reaction-app-profile
-ecs-cli compose --project-name reaction-app-hydra-migrate service down --cluster-config reaction-app --ecs-profile reaction-app-profile
-ecs-cli down --force --cluster-config reaction-app --ecs-profile reaction-app-profile
+ecs-cli compose --project-name reaction-app-db service down --cluster-config reaction-app --ecs-profile reaction-app-profile
+ecs-cli compose --project-name reaction-app-migrate service down --cluster-config reaction-app --ecs-profile reaction-app-profile
+
+
+ecs-cli logs --task-id ac46ac3e2bbf4e81a5af24273c01f239 --follow --cluster-config reaction-app --ecs-profile reaction-app-profile
+
+ecs-cli down --force --cluster-config reaction-app-db --ecs-profile reaction-app-profile
