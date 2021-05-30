@@ -1,28 +1,23 @@
 version: '3'
 
+networks:
+  reaction:
+    external:
+      name: reaction.localhost
+
 services:
-  identity:
-    image: reactioncommerce/identity:3.3.0
-    env_file:
-      - ./reaction-identity.env
-    ports:
-      - "4100:4100"
-    logging:
-      driver: awslogs
-      options: 
-        awslogs-group: reaction-identity-logs
-        awslogs-region: eu-west-1
-        awslogs-stream-prefix: reaction-identity
-        
   hydra:
     image: oryd/hydra:v1.0.8
     command: serve all --dangerous-force-http
+    networks:
+      default:
+      reaction:
     ports:
       - "4444:4444"
       - "4445:4445"
       - "5555:5555"
     environment:
-      - DSN=postgres://hydra:changeme@3.249.242.239:5432/hydra?sslmode=disable
+      - DSN=postgres://hydra:changeme@63.35.212.3:5432/hydra?sslmode=disable
       - OAUTH2_EXPOSE_INTERNAL_ERRORS=true
       - OIDC_SUBJECT_IDENTIFIERS_ENABLED=true
       - OIDC_SUBJECT_IDENTIFIERS_PAIRWISE_SALT=SLIJGmcFboz59JGd9wH4lqdHHTJztw-j
@@ -41,9 +36,28 @@ services:
         awslogs-group: reaction-hydra-logs
         awslogs-region: eu-west-1
         awslogs-stream-prefix: reaction-hydra
+        
+  identity:
+    image: reactioncommerce/identity:3.3.0
+    networks:
+      default:
+      reaction:
+    env_file:
+      - ./reaction-identity.env
+    ports:
+      - "4100:4100"
+    logging:
+      driver: awslogs
+      options: 
+        awslogs-group: reaction-identity-logs
+        awslogs-region: eu-west-1
+        awslogs-stream-prefix: reaction-identity
 
   web:
     image: reactioncommerce/example-storefront:4.0.2
+    networks:
+      default:
+      reaction:
     env_file:
       - ./web.env
     ports:
@@ -57,6 +71,9 @@ services:
 
   reaction-admin:
     image: reactioncommerce/admin:3.0.0-beta.13
+    networks:
+      default:
+      reaction:
     env_file:
       - ./reaction-admin.env
     ports:
@@ -70,8 +87,11 @@ services:
 
   api:
     image: reactioncommerce/reaction:3.11.1
+    networks:
+      default:
+      reaction:
     environment:
-      - MONGO_URL=mongodb://3.249.242.239:27017/reaction
+      - MONGO_URL=mongodb://63.35.212.3:27017/reaction
       - ROOT_URL=http://localhost:3000
       - STRIPE_API_KEY=YOUR_PRIVATE_STRIPE_API_KEY     
     ports:
