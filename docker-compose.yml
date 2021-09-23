@@ -1,4 +1,10 @@
-version: '3'
+# This docker-compose file is used to run the project's published image
+#
+# Usage: docker-compose up [-d]
+#
+# See comment in docker-compose.dev.yml if you want to run for development.
+
+version: "3"
 
 networks:
   reaction:
@@ -6,60 +12,22 @@ networks:
       name: reaction.localhost
 
 services:
-  hydra:
-    image: oryd/hydra:v1.0.8
-    command: serve all --dangerous-force-http
-    networks:
-      default:
-      reaction:
-    ports:
-      - "4444:4444"
-      - "4445:4445"
-      - "5555:5555"
-    environment:
-      - DSN=postgres://hydra:changeme@63.35.212.3:5432/hydra?sslmode=disable
-      - OAUTH2_EXPOSE_INTERNAL_ERRORS=true
-      - OIDC_SUBJECT_IDENTIFIERS_ENABLED=true
-      - OIDC_SUBJECT_IDENTIFIERS_PAIRWISE_SALT=SLIJGmcFboz59JGd9wH4lqdHHTJztw-j
-      - SECRETS_SYSTEM=SLIJGmcFboz59JGd9wH4lqdHHTJztw-j
-      - SERVE_PUBLIC_CORS_ALLOWED_ORIGINS=http://localhost:4080
-      - SERVE_PUBLIC_CORS_ENABLED=true
-      - URLS_CONSENT=http://localhost:4100/consent
-      - URLS_ERROR=http://localhost:4100/account/oauth-error
-      - URLS_LOGIN=http://localhost:4100/login
-      - URLS_LOGOUT=http://localhost:4100/logout
-      - URLS_SELF_ISSUER=http://localhost:4444
-    restart: unless-stopped
-    logging:
-      driver: awslogs
-      options: 
-        awslogs-group: reaction-hydra-logs
-        awslogs-region: eu-west-1
-        awslogs-stream-prefix: reaction-hydra
-        
-  identity:
-    image: reactioncommerce/identity:3.3.0
-    networks:
-      default:
-      reaction:
-    env_file:
-      - ./reaction-identity.env
-    ports:
-      - "4100:4100"
-    logging:
-      driver: awslogs
-      options: 
-        awslogs-group: reaction-identity-logs
-        awslogs-region: eu-west-1
-        awslogs-stream-prefix: reaction-identity
-
   web:
-    image: reactioncommerce/example-storefront:4.0.2
+    image: example-storefront:latest
+    environment:
+      - CANONICAL_URL=http://localhost:4000
+      - BUILD_GRAPHQL_URL=http://localhost:3000/graphql
+      - EXTERNAL_GRAPHQL_URL=http://localhost:3000/graphql
+      - INTERNAL_GRAPHQL_URL=http://localhost:3000/graphql
+      - PORT=4000
+      - SEGMENT_ANALYTICS_SKIP_MINIMIZE=true
+      - SEGMENT_ANALYTICS_WRITE_KEY=ENTER_KEY_HERE
+      - SESSION_MAX_AGE_MS=2592000000
+      - SESSION_SECRET=CHANGEME
+      - STRIPE_PUBLIC_API_KEY=ENTER_STRIPE_PUBLIC_KEY_HERE
     networks:
       default:
       reaction:
-    env_file:
-      - ./web.env
     ports:
       - 4000:4000
     logging:
@@ -69,31 +37,17 @@ services:
         awslogs-region: eu-west-1
         awslogs-stream-prefix: reaction-web
 
-  reaction-admin:
-    image: reactioncommerce/admin:3.0.0-beta.13
-    networks:
-      default:
-      reaction:
-    env_file:
-      - ./reaction-admin.env
-    ports:
-      - "4080:4080"
-    logging:
-      driver: awslogs
-      options: 
-        awslogs-group: reaction-admin-logs
-        awslogs-region: eu-west-1
-        awslogs-stream-prefix: reaction-admin
-
   api:
-    image: reactioncommerce/reaction:3.11.1
+    image: reaction-api:latest
+    depends_on:
+      - mongo
+    environment:
+      - MONGO_URL=mongodb://mongo.reaction.localhost:27017/reaction
+      - ROOT_URL=http://localhost:3000
+      - STRIPE_API_KEY=YOUR_PRIVATE_STRIPE_API_KEY
     networks:
       default:
       reaction:
-    environment:
-      - MONGO_URL=mongodb://63.35.212.3:27017/reaction
-      - ROOT_URL=http://localhost:3000
-      - STRIPE_API_KEY=YOUR_PRIVATE_STRIPE_API_KEY     
     ports:
       - "3000:3000"
     logging:
@@ -102,4 +56,59 @@ services:
         awslogs-group: reaction-api-logs
         awslogs-region: eu-west-1
         awslogs-stream-prefix: reaction-api
+
+  mongo:
+    image: mongo:4.2.0
+    command: mongod --oplogSize 128 --replSet rs0 --storageEngine=wiredTiger
+    networks:
+      default:
+      reaction:
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-db4:/data/db
+    healthcheck: # re-run rs.initiate() after startup if it failed.
+      test: test $$(echo "rs.status().ok || rs.initiate().ok" | mongo --quiet) -eq 1
+      interval: 10s
+    logging:
+      driver: awslogs
+      options: 
+        awslogs-group: reaction-mongo-logs
+        awslogs-region: eu-west-1
+        awslogs-stream-prefix: reaction-mongo
+
+  reaction-admin:
+    image: reaction-admin:latest
+    environment:
+      - METEOR_DISABLE_OPTIMISTIC_CACHING=1
+      - METEOR_WATCH_POLLING_INTERVAL_MS=10000
+      - MONGO_OPLOG_URL=mongodb://mongo.reaction.localhost:27017/local
+      - MONGO_URL=mongodb://mongo.reaction.localhost:27017/reaction
+      - NODE_ENV=development
+      - PORT=4080
+      - PUBLIC_FILES_BASE_URL=http://localhost:3000
+      - PUBLIC_GRAPHQL_API_URL_HTTP=http://localhost:3000/graphql
+      - PUBLIC_GRAPHQL_API_URL_WS=ws://localhost:3000/graphql
+      - PUBLIC_I18N_BASE_URL=http://localhost:3000
+      - PUBLIC_STOREFRONT_HOME_URL=http://localhost:4000
+      - ROOT_URL=http://localhost:4080
+    depends_on:
+      - mongo
+      - api
+    networks:
+      default:
+      reaction:
+    ports:
+      - "4080:4080"
+      - "9231:9229"
+    logging:
+      driver: awslogs
+      options: 
+        awslogs-group: reaction-admin-logs
+        awslogs-region: eu-west-1
+        awslogs-stream-prefix: reaction-admin
+
+volumes:
+  mongo-db4:
+
 
