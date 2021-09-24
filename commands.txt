@@ -70,6 +70,8 @@ MONGO_URL=mongodb://34.245.52.246:27017/reaction npx migrator migrate
 
 Start Service:
 ecs-cli compose --project-name reaction-app service up --create-log-groups --cluster-config reaction-app --ecs-profile reaction-app-profile
+ecs-cli compose --project-name reaction-app-store-front --file docker-compose-store-front.yml service up --create-log-groups --cluster-config reaction-app --ecs-profile reaction-app-profile
+ecs-cli compose --project-name reaction-app-admin --file docker-compose-admin.yml service up --create-log-groups --cluster-config reaction-app --ecs-profile reaction-app-profile
 
 Check Service Status:
 ecs-cli compose --project-name reaction-app service ps --cluster-config reaction-app --ecs-profile reaction-app-profile

@@ -1,0 +1,44 @@
+# This docker-compose file is used to run the project's published image
+#
+# Usage: docker-compose up [-d]
+#
+# See comment in docker-compose.dev.yml if you want to run for development.
+
+version: "3"
+
+networks:
+  reaction:
+    external:
+      name: reaction.localhost
+
+services:
+  reaction-admin:
+    image: public.ecr.aws/i8a0p2p6/reaction-admin:latest
+    environment:
+      - METEOR_DISABLE_OPTIMISTIC_CACHING=1
+      - METEOR_WATCH_POLLING_INTERVAL_MS=10000
+      - MONGO_OPLOG_URL=mongodb://34.245.52.246:27017/local
+      - MONGO_URL=mongodb://34.245.52.246:27017/reaction
+      - NODE_ENV=development
+      - PORT=4080
+      - PUBLIC_FILES_BASE_URL=http://54.216.64.182:3000
+      - PUBLIC_GRAPHQL_API_URL_HTTP=http://54.216.64.182:3000/graphql
+      - PUBLIC_GRAPHQL_API_URL_WS=ws://54.216.64.182:3000/graphql
+      - PUBLIC_I18N_BASE_URL=http://54.216.64.182:3000
+      - PUBLIC_STOREFRONT_HOME_URL=http://3.250.120.91:4000
+      - ROOT_URL=http://localhost:4080
+    # depends_on:
+    #   - api
+    networks:
+      default:
+      reaction:
+    ports:
+      - "4080:4080"
+    logging:
+      driver: awslogs
+      options: 
+        awslogs-group: reaction-admin-logs
+        awslogs-region: eu-west-1
+        awslogs-stream-prefix: reaction-admin
+
+

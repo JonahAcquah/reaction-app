@@ -12,31 +12,6 @@ networks:
       name: reaction.localhost
 
 services:
-  web:
-    image: public.ecr.aws/i8a0p2p6/example-storefront:latest
-    environment:
-      - CANONICAL_URL=http://localhost:4000
-      - BUILD_GRAPHQL_URL=http://localhost:3000/graphql
-      - EXTERNAL_GRAPHQL_URL=http://localhost:3000/graphql
-      - INTERNAL_GRAPHQL_URL=http://localhost:3000/graphql
-      - PORT=4000
-      - SEGMENT_ANALYTICS_SKIP_MINIMIZE=true
-      - SEGMENT_ANALYTICS_WRITE_KEY=ENTER_KEY_HERE
-      - SESSION_MAX_AGE_MS=2592000000
-      - SESSION_SECRET=CHANGEME
-      - STRIPE_PUBLIC_API_KEY=ENTER_STRIPE_PUBLIC_KEY_HERE
-    networks:
-      default:
-      reaction:
-    ports:
-      - 4000:4000
-    logging:
-      driver: awslogs
-      options: 
-        awslogs-group: reaction-web-logs
-        awslogs-region: eu-west-1
-        awslogs-stream-prefix: reaction-web
-
   api:
     image: public.ecr.aws/i8a0p2p6/reaction-api:latest
     environment:
@@ -54,34 +29,5 @@ services:
         awslogs-group: reaction-api-logs
         awslogs-region: eu-west-1
         awslogs-stream-prefix: reaction-api
-
-  reaction-admin:
-    image: public.ecr.aws/i8a0p2p6/reaction-admin:latest
-    environment:
-      - METEOR_DISABLE_OPTIMISTIC_CACHING=1
-      - METEOR_WATCH_POLLING_INTERVAL_MS=10000
-      - MONGO_OPLOG_URL=mongodb://34.245.52.246:27017/local
-      - MONGO_URL=mongodb://34.245.52.246:27017/reaction
-      - NODE_ENV=development
-      - PORT=4080
-      - PUBLIC_FILES_BASE_URL=http://localhost:3000
-      - PUBLIC_GRAPHQL_API_URL_HTTP=http://localhost:3000/graphql
-      - PUBLIC_GRAPHQL_API_URL_WS=ws://localhost:3000/graphql
-      - PUBLIC_I18N_BASE_URL=http://localhost:3000
-      - PUBLIC_STOREFRONT_HOME_URL=http://localhost:4000
-      - ROOT_URL=http://localhost:4080
-    depends_on:
-      - api
-    networks:
-      default:
-      reaction:
-    ports:
-      - "4080:4080"
-    logging:
-      driver: awslogs
-      options: 
-        awslogs-group: reaction-admin-logs
-        awslogs-region: eu-west-1
-        awslogs-stream-prefix: reaction-admin
 
 
