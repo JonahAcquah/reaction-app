@@ -13,7 +13,7 @@ networks:
 
 services:
   web:
-    image: example-storefront:latest
+    image: public.ecr.aws/i8a0p2p6/example-storefront:latest
     environment:
       - CANONICAL_URL=http://localhost:4000
       - BUILD_GRAPHQL_URL=http://localhost:3000/graphql
@@ -38,11 +38,9 @@ services:
         awslogs-stream-prefix: reaction-web
 
   api:
-    image: reaction-api:latest
-    depends_on:
-      - mongo
+    image: public.ecr.aws/i8a0p2p6/reaction-api:latest
     environment:
-      - MONGO_URL=mongodb://mongo.reaction.localhost:27017/reaction
+      - MONGO_URL=mongodb://34.245.52.246:27017/reaction
       - ROOT_URL=http://localhost:3000
       - STRIPE_API_KEY=YOUR_PRIVATE_STRIPE_API_KEY
     networks:
@@ -57,33 +55,13 @@ services:
         awslogs-region: eu-west-1
         awslogs-stream-prefix: reaction-api
 
-  mongo:
-    image: mongo:4.2.0
-    command: mongod --oplogSize 128 --replSet rs0 --storageEngine=wiredTiger
-    networks:
-      default:
-      reaction:
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo-db4:/data/db
-    healthcheck: # re-run rs.initiate() after startup if it failed.
-      test: test $$(echo "rs.status().ok || rs.initiate().ok" | mongo --quiet) -eq 1
-      interval: 10s
-    logging:
-      driver: awslogs
-      options: 
-        awslogs-group: reaction-mongo-logs
-        awslogs-region: eu-west-1
-        awslogs-stream-prefix: reaction-mongo
-
   reaction-admin:
-    image: reaction-admin:latest
+    image: public.ecr.aws/i8a0p2p6/reaction-admin:latest
     environment:
       - METEOR_DISABLE_OPTIMISTIC_CACHING=1
       - METEOR_WATCH_POLLING_INTERVAL_MS=10000
-      - MONGO_OPLOG_URL=mongodb://mongo.reaction.localhost:27017/local
-      - MONGO_URL=mongodb://mongo.reaction.localhost:27017/reaction
+      - MONGO_OPLOG_URL=mongodb://34.245.52.246:27017/local
+      - MONGO_URL=mongodb://34.245.52.246:27017/reaction
       - NODE_ENV=development
       - PORT=4080
       - PUBLIC_FILES_BASE_URL=http://localhost:3000
@@ -93,22 +71,17 @@ services:
       - PUBLIC_STOREFRONT_HOME_URL=http://localhost:4000
       - ROOT_URL=http://localhost:4080
     depends_on:
-      - mongo
       - api
     networks:
       default:
       reaction:
     ports:
       - "4080:4080"
-      - "9231:9229"
     logging:
       driver: awslogs
       options: 
         awslogs-group: reaction-admin-logs
         awslogs-region: eu-west-1
         awslogs-stream-prefix: reaction-admin
-
-volumes:
-  mongo-db4:
 
 

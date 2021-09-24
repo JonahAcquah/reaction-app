@@ -1,5 +1,5 @@
 ecs-cli configure --cluster reaction-app --default-launch-type FARGATE --config-name reaction-app --region eu-west-1
-ecs-cli configure profile --access-key AKIASETT7CINUUVIKIHZ --secret-key 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 --profile-name reaction-app-profile
+ecs-cli configure profile --access-key ***** --secret-key **** --profile-name reaction-app-profile
 
 aws iam --region eu-west-1 create-role --role-name ecsTaskExecutionRole --assume-role-policy-document file://task-execution-assume-role.json
 aws iam --region eu-west-1 attach-role-policy --role-name ecsTaskExecutionRole --policy-arn arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
@@ -62,14 +62,22 @@ aws ec2 authorize-security-group-ingress --group-id sg-0b021bbd2b50fe461 --proto
 aws ec2 authorize-security-group-ingress --group-id sg-0b021bbd2b50fe461 --protocol tcp --port 27017 --cidr 0.0.0.0/0 --region eu-west-1
 aws ec2 authorize-security-group-ingress --group-id sg-0b021bbd2b50fe461 --protocol tcp --port 5432 --cidr 0.0.0.0/0 --region eu-west-1
 
+Start Database Service
+ecs-cli compose --project-name reaction-app-db --file docker-compose-db.yml  service up --create-log-groups --cluster-config reaction-app --ecs-profile reaction-app-profile
+
+Run data migration - api-migrations repo
+MONGO_URL=mongodb://34.245.52.246:27017/reaction npx migrator migrate
+
 Start Service:
 ecs-cli compose --project-name reaction-app service up --create-log-groups --cluster-config reaction-app --ecs-profile reaction-app-profile
 
 Check Service Status:
 ecs-cli compose --project-name reaction-app service ps --cluster-config reaction-app --ecs-profile reaction-app-profile
+ecs-cli compose --project-name reaction-app-db service ps --cluster-config reaction-app --ecs-profile reaction-app-profile
 
 Shutdown Service:
 ecs-cli compose --project-name reaction-app service down --cluster-config reaction-app --ecs-profile reaction-app-profile
+ecs-cli compose --project-name reaction-app-db service down --cluster-config reaction-app --ecs-profile reaction-app-profile
 
 
 ecs-cli logs --task-id ac46ac3e2bbf4e81a5af24273c01f239 --follow --cluster-config reaction-app --ecs-profile reaction-app-profile
